@@ -50,8 +50,10 @@ npm install
 
 3. **Set up environment variables**
 Create a `.env.local` file with required API keys:
+Get your Firecrawl API key from https://firecrawl.dev
 ```env
 OPENAI_API_KEY=your_api_key_here
+FIRECRAWL_KEY=your_api_key_here
 ```
 
 4. **Run the development server**
