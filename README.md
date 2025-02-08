@@ -1,6 +1,8 @@
 # AI Research Assistant
 
-A sophisticated research tool powered by AI that helps users explore topics deeply and comprehensively through multiple sources.
+This is a fork off David's great work at https://github.com/dzhng/deep-research. This includes a new UI/UX based on NextJS.
+
+In short, it's a sophisticated research tool powered by AI that helps users explore topics deeply and comprehensively through multiple sources.
 
 ## Features
 
