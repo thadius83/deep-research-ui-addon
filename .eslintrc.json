@@ -1,0 +1,23 @@
+{
+    "extends": "next/core-web-vitals",
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-types": "off"
+    },
+    "overrides": [
+      {
+        "files": ["src/app/api/**/*.ts", "src/app/**/*.tsx"],
+        "rules": {
+          "@typescript-eslint/no-unused-vars": "off",
+          "@typescript-eslint/ban-types": "off",
+          "@typescript-eslint/no-explicit-any": "off",
+          "@typescript/prefer-as-const": "off",
+          "@typescript-eslint/no-unsafe-assignment": "off",
+          "typescript-eslint/no-unsafe-member-access": "off"
+        }
+      }
+    ],
+    "ignorePatterns": [
+      ".next/types/**/*.ts"
+    ]
+  }

@@ -1,181 +1,110 @@
-# Open Deep Research
+# AI Research Assistant
 
-An AI-powered research assistant that performs iterative, deep research on any topic by combining search engines, web scraping, and large language models.
-
-The goal of this repo is to provide the simplest implementation of a deep research agent - e.g. an agent that can refine its research direction overtime and deep dive into a topic. Goal is to keep the repo size at <500 LoC so it is easy to understand and build on top of.
-
-If you like this project, please consider starring it and giving me a follow on [X/Twitter](https://x.com/dzhng). This project is sponsored by [Aomni](https://aomni.com).
-
-## How It Works
-
-```mermaid
-flowchart TB
-    subgraph Input
-        Q[User Query]
-        B[Breadth Parameter]
-        D[Depth Parameter]
-    end
-
-    DR[Deep Research] -->
-    SQ[SERP Queries] -->
-    PR[Process Results]
-
-    subgraph Results[Results]
-        direction TB
-        NL((Learnings))
-        ND((Directions))
-    end
-
-    PR --> NL
-    PR --> ND
-
-    DP{depth > 0?}
-
-    RD["Next Direction:
-    - Prior Goals
-    - New Questions
-    - Learnings"]
-
-    MR[Markdown Report]
-
-    %% Main Flow
-    Q & B & D --> DR
-
-    %% Results to Decision
-    NL & ND --> DP
-
-    %% Circular Flow
-    DP -->|Yes| RD
-    RD -->|New Context| DR
-
-    %% Final Output
-    DP -->|No| MR
-
-    %% Styling
-    classDef input fill:#7bed9f,stroke:#2ed573,color:black
-    classDef process fill:#70a1ff,stroke:#1e90ff,color:black
-    classDef recursive fill:#ffa502,stroke:#ff7f50,color:black
-    classDef output fill:#ff4757,stroke:#ff6b81,color:black
-    classDef results fill:#a8e6cf,stroke:#3b7a57,color:black
-
-    class Q,B,D input
-    class DR,SQ,PR process
-    class DP,RD recursive
-    class MR output
-    class NL,ND results
-```
+A sophisticated research tool powered by AI that helps users explore topics deeply and comprehensively through multiple sources.
 
 ## Features
 
-- **Iterative Research**: Performs deep research by iteratively generating search queries, processing results, and diving deeper based on findings
-- **Intelligent Query Generation**: Uses LLMs to generate targeted search queries based on research goals and previous findings
-- **Depth & Breadth Control**: Configurable parameters to control how wide (breadth) and deep (depth) the research goes
-- **Smart Follow-up**: Generates follow-up questions to better understand research needs
-- **Comprehensive Reports**: Produces detailed markdown reports with findings and sources
-- **Concurrent Processing**: Handles multiple searches and result processing in parallel for efficiency
+- **Intelligent Research**: Conducts comprehensive research across multiple sources based on user queries
+- **Interactive Follow-up Questions**: Generates relevant follow-up questions to better understand research needs
+- **Adjustable Research Parameters**:
+  - Research Breadth (1-5): Controls the diversity of sources explored
+  - Research Depth (1-5): Determines how deeply each source is analyzed
+- **Real-time Progress Updates**: Visual feedback on research progress with loading animations
+- **Export Options**:
+  - Copy full report
+  - Copy sources separately
+  - Export to PDF with professional formatting
+- **Source Attribution**: All research includes properly cited sources
+- **Responsive Design**: Works seamlessly across desktop and mobile devices
 
-## Requirements
+## Technology Stack
 
-- Node.js environment
-- API keys for:
-  - Firecrawl API (for web search and content extraction)
-  - OpenAI API (for o3 mini model)
+- **Frontend**:
+  - Next.js 15.1.6
+  - React 19
+  - TypeScript
+  - Tailwind CSS for styling
+  - Lucide React for icons
 
-## Setup
+- **UI Components**:
+  - Custom Card components
+  - Interactive Slider
+  - Circular Progress indicator
+  - Markdown renderer
 
-### Node.js
+- **PDF Generation**:
+  - html2pdf.js for PDF export functionality
 
-1. Clone the repository
-2. Install dependencies:
+- **AI Integration**:
+  - OpenAI SDK for AI processing
+  - Custom deep research implementation
+
+## Getting Started
+
+1. **Clone the repository**
+
+2. **Install dependencies**
 
 ```bash
 npm install
 ```
 
-3. Set up environment variables in a `.env.local` file:
-
-```bash
-FIRECRAWL_KEY="your_firecrawl_key"
-# If you want to use your self-hosted Firecrawl, add the following below:
-# FIRECRAWL_BASE_URL="http://localhost:3002"
-
-OPENAI_KEY="your_openai_key"
+3. **Set up environment variables**
+Create a `.env.local` file with required API keys:
+```env
+OPENAI_API_KEY=your_api_key_here
 ```
 
-### Docker
-
-1. Clone the repository
-2. Rename `.env.example` to `.env.local` and set your API keys
-
-3. Run the Docker image:
-
+4. **Run the development server**
 ```bash
-docker compose run --rm deep-research
+npm run dev
+```
+
+5. **Build for production**
+```bash
+npm run build
 ```
 
 ## Usage
 
-Run the research assistant:
+1. Enter your research topic in the main input field
+2. Adjust research parameters if needed:
+   - Breadth: Controls the variety of sources (1-5)
+   - Depth: Controls the detail level (1-5)
+3. Click "Begin Research"
+4. Answer follow-up questions to refine the research
+5. Review the generated report
+6. Export or copy the results as needed
 
-```bash
-npm start
+## Project Structure
+
+```
+src/
+├── app/                 # Next.js app directory
+├── components/         # React components
+│   ├── ui/            # Reusable UI components
+│   ├── ResearchForm.tsx
+│   └── Markdown.tsx
+├── lib/               # Utility functions
+│   └── deep-research.ts
+└── types/             # TypeScript type definitions
 ```
 
-You'll be prompted to:
+## Contributing
 
-1. Enter your research query
-2. Specify research breadth (recommended: 3-10, default: 6)
-3. Specify research depth (recommended: 1-5, default: 3)
-4. Answer follow-up questions to refine the research direction
-
-The system will then:
-
-1. Generate and execute search queries
-2. Process and analyze search results
-3. Recursively explore deeper based on findings
-4. Generate a comprehensive markdown report
-
-The final report will be saved as `output.md` in your working directory.
-
-### Concurrency
-
-If you have a paid version of Firecrawl or a local version, feel free to increase the `ConcurrencyLimit` in `deep-research.ts` so it runs a lot faster.
-
-If you have a free version, you may sometime run into rate limit errors, you can reduce the limit (but it will run a lot slower).
-
-### Custom endpoints and models
-
-There are 2 other optional env vars that lets you tweak the endpoint (for other OpenAI compatible APIs like OpenRouter or Gemini) as well as the model string.
-
-```bash
-OPENAI_ENDPOINT="custom_endpoint"
-OPENAI_MODEL="custom_model"
-```
-
-## How It Works
-
-1. **Initial Setup**
-
-   - Takes user query and research parameters (breadth & depth)
-   - Generates follow-up questions to understand research needs better
-
-2. **Deep Research Process**
-
-   - Generates multiple SERP queries based on research goals
-   - Processes search results to extract key learnings
-   - Generates follow-up research directions
-
-3. **Recursive Exploration**
-
-   - If depth > 0, takes new research directions and continues exploration
-   - Each iteration builds on previous learnings
-   - Maintains context of research goals and findings
-
-4. **Report Generation**
-   - Compiles all findings into a comprehensive markdown report
-   - Includes all sources and references
-   - Organizes information in a clear, readable format
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
-MIT License - feel free to use and modify as needed.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with Next.js and React
+- Styled with Tailwind CSS
+- AI powered by OpenAI
+- Icons by Lucide React

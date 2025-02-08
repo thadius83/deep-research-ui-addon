@@ -1,41 +1,32 @@
-import { createOpenAI, type OpenAIProviderSettings } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { getEncoding } from 'js-tiktoken';
 
 import { RecursiveCharacterTextSplitter } from './text-splitter';
 
-interface CustomOpenAIProviderSettings extends OpenAIProviderSettings {
-  baseURL?: string;
-}
-
 // Providers
+
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_KEY!,
-  baseURL: process.env.OPENAI_ENDPOINT || 'https://api.openai.com/v1',
-} as CustomOpenAIProviderSettings);
-
-const isCustomEndpoint =
-  process.env.OPENAI_ENDPOINT &&
-  process.env.OPENAI_ENDPOINT !== 'https://api.openai.com/v1';
-const customModel = process.env.OPENAI_MODEL;
+});
 
 // Models
 
-export const o3MiniModel = openai(
-  isCustomEndpoint && customModel ? customModel : 'o3-mini',
-  {
-    reasoningEffort: 'medium',
-    structuredOutputs: true,
-  },
-);
+export const gpt4Model = openai('gpt-4o', {
+  structuredOutputs: true,
+});
+export const gpt4MiniModel = openai('gpt-4o-mini', {
+  structuredOutputs: true,
+});
+export const o3MiniModel = openai('o3-mini', {
+  reasoningEffort: 'medium',
+  structuredOutputs: true,
+});
 
 const MinChunkSize = 140;
 const encoder = getEncoding('o200k_base');
 
 // trim prompt to maximum context size
-export function trimPrompt(
-  prompt: string,
-  contextSize = Number(process.env.CONTEXT_SIZE) || 128_000,
-) {
+export function trimPrompt(prompt: string, contextSize = 120_000) {
   if (!prompt) {
     return '';
   }
