@@ -34,9 +34,6 @@ In short, it's a sophisticated research tool powered by AI that helps users expl
   - Circular Progress indicator
   - Markdown renderer
 
-- **PDF Generation**:
-  - html2pdf.js for PDF export functionality
-
 - **AI Integration**:
   - OpenAI SDK for AI processing
   - Custom deep research implementation
