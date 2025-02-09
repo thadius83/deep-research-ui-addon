@@ -57,23 +57,32 @@ async function generateSerpQueries({
 async function processSerpResult({
   query,
   result,
-  numLearnings = 5, // Increased default from 3 to 5
+  numLearnings = 5,
   numFollowUpQuestions = 3,
 }: {
   query: string;
   result: SearchResponse;
   numLearnings?: number;
   numFollowUpQuestions?: number;
-}) {
-  const contents = compact(result.data.map(item => item.markdown))
-    .map(content => trimPrompt(content, 35_000));
-  console.log(`[deep-research.ts][processSerpResult] Ran query: "${query}", found ${contents.length} contents`);
-  console.log(`[deep-research.ts][processSerpResult] Trimmed content length: ${trimmed.length}`);
+}): Promise<{ learnings: string[]; followUpQuestions: string[] }> {
+  // Extract the markdown content from search results and remove any falsey values.
+  const rawContents = compact(result.data.map(item => item.markdown));
+  
+  // Trim each content to a maximum of 35,000 characters and log the trimmed length.
+  const trimmedContents = rawContents.map(content => {
+    const trimmed = trimPrompt(content, 35_000);
+    console.log(`[deep-research.ts][processSerpResult] Trimmed content length: ${trimmed.length}`);
+    return trimmed;
+  });
+  
+  console.log(`[deep-research.ts][processSerpResult] Ran query: "${query}", found ${trimmedContents.length} contents`);
 
-  const promptStr = `Given the following contents from a SERP search for the query <query>${query}</query>, generate a list of detailed learnings. For each learning, provide an in-depth explanation that includes context, technical details, relevant metrics, and implications. Return up to ${numLearnings} learnings. Ensure that each learning is comprehensive and spans at least a few paragraphs if possible.\n\n<contents>${trimmedContents.map(content => `<content>\n${content}\n</content>`).join('\n')}</contents>`;
-
+  // Construct a prompt for the LLM that instructs it to generate detailed learnings.
+  const promptStr = `Given the following contents from a SERP search for the query <query>${query}</query>, generate a detailed list of learnings. For each learning, provide an in-depth explanation that includes context, technical details, relevant metrics, and implications. Return up to ${numLearnings} learnings. Ensure that each learning is comprehensive and spans at least a few paragraphs if possible.\n\n<contents>\n${trimmedContents.map(content => `<content>\n${content}\n</content>`).join('\n')}\n</contents>`;
+  
   console.log("[deep-research.ts][processSerpResult] Prompt sent to LLM:", promptStr);
 
+  // Call the LLM provider with the constructed prompt.
   const res = await generateObject({
     model: o3MiniModel,
     abortSignal: AbortSignal.timeout(60_000),
@@ -84,11 +93,14 @@ async function processSerpResult({
       followUpQuestions: z.array(z.string()).describe(`List of follow-up questions, max of ${numFollowUpQuestions}`),
     }),
   });
-  
+
   console.log("[deep-research.ts][processSerpResult] LLM response:", res.object);
   console.log(`[deep-research.ts][processSerpResult] Created ${res.object.learnings.length} learnings:`, res.object.learnings);
+
   return res.object;
 }
+
+export { processSerpResult };
 
 
 
@@ -105,12 +117,13 @@ export async function writeFinalReport({
 }) {
   const learningsString = trimPrompt(
     learnings.map(learning => `<learning>\n${learning}\n</learning>`).join('\n'),
-    150_000,
+    1750_000,
   );
 
   // Updated prompt: instruct the LLM to generate a much longer report (at least 5 pages)
 
-  const finalPrompt = `Given the following prompt from the user, write an extremely detailed final report on the topic using the learnings from research. The report should be highly comprehensive—aim for at least 5 pages of detailed analysis. For each learning provided below, elaborate on its implications, include technical details, and integrate relevant context from the SERP search results if available. Be sure to provide an in-depth executive summary that reiterates the original query and addresses any follow-up questions.\n\n<prompt>${prompt}</prompt>\n\nHere are all the learnings from previous research:\n\n<learnings>\n${learningsString}\n</learnings>\n\nEnsure that you include the original query as follows:\n\n<query>\n${query}\n</query>\n\nTake into account the original intent of the primary query and the follow-up questions. More detail is better.`;
+  const finalPrompt = `Given the following prompt from the user, write an extremely detailed final report on the topic using the learnings from research. The report should be highly comprehensive—aim for at least 5 pages of detailed analysis when formatted. For each learning provided below, elaborate on its implications with extended discussions that include multiple case studies, data analysis, and, where applicable, citations or references to support the findings. Provide an in-depth executive summary that reiterates the original query and addresses any follow-up questions. Include detailed technical analysis, comparisons, and examples throughout the report.\n\n<prompt>${prompt}</prompt>\n\nHere are all the learnings from previous research:\n\n<learnings>\n${learningsString}\n</learnings>\n\nEnsure that you include the original query as follows:\n\n<query>\n${query}\n</query>\n\nTake into account the original intent of the primary query and the follow-up questions. More detail is better.`;
+
 
   console.log("[deep-research.ts][writeFinalReport] Prompt sent to LLM:", finalPrompt);
 
@@ -150,8 +163,8 @@ export async function deepResearch({
       limit(async () => {
         try {
           const result = await firecrawl.search(serpQuery.query, {
-            timeout: 20000,
-            limit: 8,
+            timeout: 15000,
+            limit: 5,
             scrapeOptions: { formats: ['markdown'] },
           });
 
