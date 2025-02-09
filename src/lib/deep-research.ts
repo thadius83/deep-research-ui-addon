@@ -165,7 +165,14 @@ export async function deepResearch({
           const result = await firecrawl.search(serpQuery.query, {
             timeout: 15000,
             limit: 5,
-            scrapeOptions: { formats: ['markdown'] },
+            scrapeOptions: { 
+		formats: ['markdown'],        // We're currently extracting Markdown
+		onlyMainContent: true,          // Focus on main content only
+		//mobile: false,                  // Set to true if mobile pages are preferred
+    		waitFor: 3000,                  // Wait 3 seconds for dynamic content to load
+    		removeBase64Images: true,       // Optional: remove embedded images to reduce clutter
+    		//actions: [{ type: 'scroll', direction: 'down' }],
+	    },
           });
 
           // Collect URLs from this search
