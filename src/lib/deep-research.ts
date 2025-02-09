@@ -117,12 +117,12 @@ export async function writeFinalReport({
 }) {
   const learningsString = trimPrompt(
     learnings.map(learning => `<learning>\n${learning}\n</learning>`).join('\n'),
-    1750_000,
+    175_000,
   );
 
   // Updated prompt: instruct the LLM to generate a much longer report (at least 5 pages)
 
-  const finalPrompt = `Given the following prompt from the user, write an extremely detailed final report on the topic using the learnings from research. The report should be highly comprehensive—aim for at least 5 pages of detailed analysis when formatted. For each learning provided below, elaborate on its implications with extended discussions that include multiple case studies, data analysis, and, where applicable, citations or references to support the findings. Provide an in-depth executive summary that reiterates the original query and addresses any follow-up questions. Include detailed technical analysis, comparisons, and examples throughout the report.\n\n<prompt>${prompt}</prompt>\n\nHere are all the learnings from previous research:\n\n<learnings>\n${learningsString}\n</learnings>\n\nEnsure that you include the original query as follows:\n\n<query>\n${query}\n</query>\n\nTake into account the original intent of the primary query and the follow-up questions. More detail is better.`;
+  const finalPrompt = `Given the following prompt from the user, write an extremely detailed final report on the topic using the learnings from research. The report should be highly comprehensive—aim for at least 5 pages of detailed analysis when formatted. For each learning provided below, elaborate on its implications with extended discussions that include multiple case studies, data analysis, and, where applicable, citations or references to support the findings. Provide an in-depth executive summary at the top that reiterates the original query and addresses any follow-up questions, provide a table of contents if required, then expand and provide detailed sub sections.  Include detailed technical analysis, comparisons, and examples throughout the report. Reference case studies and provide citations if appropriate\n\n<prompt>${prompt}</prompt>\n\nHere are all the learnings from previous research:\n\n<learnings>\n${learningsString}\n</learnings>\n\nEnsure that you include the original query as follows:\n\n<query>\n${query}\n</query>\n\nTake into account the original intent of the primary query and the follow-up questions. More detail is better.`;
 
 
   console.log("[deep-research.ts][writeFinalReport] Prompt sent to LLM:", finalPrompt);
@@ -173,11 +173,11 @@ export async function deepResearch({
           const newBreadth = Math.ceil(breadth / 2);
           const newDepth = depth - 1;
 
-          // Use (depth + 2) as the number of learnings to request.
+          // Use (5) as the number of learnings to request.
           const newLearnings = await processSerpResult({
             query: serpQuery.query,
             result,
-            numLearnings: depth + 2, // Updated to use depth + 2
+            numLearnings: 5, // Updated to use 5
             numFollowUpQuestions: newBreadth,
           });
           const allLearnings = [...learnings, ...newLearnings.learnings];
