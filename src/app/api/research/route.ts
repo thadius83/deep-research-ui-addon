@@ -6,12 +6,12 @@ export async function POST(req: Request) {
   try {
     const { query, breadth, depth, followUpQuestions, answers } = await req.json();
 
-    // Combine query with follow-up Q&A
-    const combinedQuery = `
-Initial Query: ${query}
-Follow-up Questions and Answers:
-${followUpQuestions.map((q: string, i: number) => `Q: ${q}\nA: ${answers[i]}`).join('\n')}
-`;
+    // Combine query with follow-up Q&A using combinedQuery
+    const combinedQuery = `Initial Query: ${query}\nFollow-up Questions and Answers: ${followUpQuestions
+      .map((q: string, i: number) => `Q: ${q}\nA: ${answers[i]}`)
+      .join('\n')}`;
+
+    console.log("[route.ts] Combined Query:", combinedQuery);
 
     // Perform research
     const { learnings, visitedUrls } = await deepResearch({
@@ -20,23 +20,30 @@ ${followUpQuestions.map((q: string, i: number) => `Q: ${q}\nA: ${answers[i]}`).j
       depth,
     });
 
-    // Generate report
+    console.log("[route.ts] Deep research returned learnings:", learnings);
+    console.log("[route.ts] Deep research returned visitedUrls:", visitedUrls);
+
+    // Generate report using combinedQuery for both 'query' and 'prompt'
+    console.log("[route.ts] Generating final report with combinedQuery as both query and prompt.");
     const report = await writeFinalReport({
+      query: combinedQuery,
       prompt: combinedQuery,
       learnings,
       visitedUrls,
     });
 
-    // Generate unique ID for the report
-    const reportId = crypto.randomBytes(16).toString('hex');
+    console.log("[route.ts] Final report generated.");
 
+    // Generate a unique ID for the report
+    const reportId = crypto.randomBytes(16).toString('hex');
 
     return NextResponse.json({ reportId, report });
   } catch (error) {
-    console.error('Error performing research:', error);
+    console.error('[route.ts] Error performing research:', error);
     return NextResponse.json(
       { error: 'Failed to perform research' },
-      { status: 500 },
+      { status: 500 }
     );
   }
-} 
+}
+
