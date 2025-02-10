@@ -1,3 +1,19 @@
+# Fork from Alvin De Cruz https://github.com/kellemar/deep-research-ui-addon
+
+This is a fork of a fork ;) The changes include mostly tweaks to the prompting, the ability to use other models and endpoints
+
+### Custom endpoints and models
+
+There are 2 other optional env vars that lets you tweak the endpoint (for other OpenAI compatible APIs like OpenRouter or Gemini) as well as the model string.
+
+```bash
+OPENAI_ENDPOINT="custom_endpoint"
+OPENAI_MODEL="custom_model"
+```
+
+
+
+
 # AI Research Assistant
 
 This is a fork off David's great work at https://github.com/dzhng/deep-research. This includes a new UI/UX based on NextJS.
@@ -56,6 +72,15 @@ OPENAI_API_KEY=your_api_key_here
 FIRECRAWL_KEY=your_api_key_here
 ```
 
+4. **Set up custom Endpoint & model - optional **
+
+To use local LLM, comment out `OPENAI_KEY` and instead uncomment `OPENAI_ENDPOINT` and `OPENAI_MODEL`:
+- In .env.local
+- Set `OPENAI_ENDPOINT` to the address of your local server (eg."http://localhost:1234/v1")
+- Set `OPENAI_MODEL` to the name of the model loaded in your local server.
+
+
+
 4. **Run the development server**
 ```bash
 npm run dev
@@ -64,6 +89,11 @@ npm run dev
 5. **Build for production**
 ```bash
 npm run build
+```
+
+6. **Start the App**
+```bash
+npm start
 ```
 
 ## Usage
