@@ -1,4 +1,4 @@
-# Fork from Alvin De Cruz https://github.com/kellemar/deep-research-ui-addon
+## Fork from Alvin De Cruz https://github.com/kellemar/deep-research-ui-addon
 
 This is a fork of a fork ;) The changes include mostly tweaks to the prompting, the ability to use other models and endpoints
 
@@ -72,7 +72,7 @@ OPENAI_API_KEY=your_api_key_here
 FIRECRAWL_KEY=your_api_key_here
 ```
 
-4. **Set up custom Endpoint & model - optional **
+4. **Set up custom Endpoint & model - optional**:
 
 To use local LLM, comment out `OPENAI_KEY` and instead uncomment `OPENAI_ENDPOINT` and `OPENAI_MODEL`:
 - In .env.local

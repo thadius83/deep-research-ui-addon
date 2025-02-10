@@ -18,7 +18,7 @@ const customModel = process.env.OPENAI_MODEL || 'o3-mini';
 // Models
 
 export const o3MiniModel = openai(customModel, {
-  reasoningEffort: customModel.startsWith('o3') ? 'medium' : undefined,
+  reasoningEffort: customModel.startsWith('o') ? 'medium' : undefined,
   structuredOutputs: true,
 });
 
