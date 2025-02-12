@@ -23,6 +23,8 @@ type ResearchStatus = {
   };
   currentTask?: string;
   error?: string | null;
+  reportUrl?: string;
+  queryUrl?: string;
 };
 
 export function ResearchForm() {
@@ -95,9 +97,30 @@ export function ResearchForm() {
     try {
       setStatus({ 
         stage: 'researching',
-        message: 'Research in progress...' 
+        message: 'Initializing research...' 
       });
 
+      // First, initialize the report to get the filenames
+      const initRes = await fetch('/api/research/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+
+      if (!initRes.ok) {
+        throw new Error('Failed to initialize research');
+      }
+
+      const { reportFileName, queryFileName, reportUrl, queryUrl } = await initRes.json();
+
+      setStatus({ 
+        stage: 'researching',
+        message: 'Research in progress...',
+        reportUrl,
+        queryUrl
+      });
+
+      // Then start the main research process
       const researchRes = await fetch('/api/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,19 +130,34 @@ export function ResearchForm() {
           depth: parseInt(depth),
           followUpQuestions,
           answers,
+          reportFileName,
+          queryFileName,
         }),
       });
 
-      const { report } = await researchRes.json();
-      setReport(report);
-      setStatus({ stage: 'complete' });
+      const data = await researchRes.json();
+      
+      if (!researchRes.ok) {
+        throw new Error(data.error || 'Research failed');
+      }
+
+      setReport(data.report);
+      setStatus({ 
+        stage: 'complete',
+        message: 'Research complete!',
+        reportUrl,
+        queryUrl
+      });
       
     } catch (error) {
-      console.error('Error:', error);
-      setStatus({
+      console.error('Error in handleAnswerSubmit:', error);
+      setStatus(prevStatus => ({
         stage: 'idle',
         message: 'An error occurred. Please try again.',
-      });
+        error: error instanceof Error ? error.message : 'Unknown error',
+        reportUrl: prevStatus.reportUrl,
+        queryUrl: prevStatus.queryUrl
+      }));
     }
   };
 
@@ -338,11 +376,14 @@ export function ResearchForm() {
               (status.stage === 'collecting-feedback' && followUpQuestions.length === 0)) ? (
               <div className="flex flex-col items-center justify-center gap-4">
                 <CircularProgress />
-                <p className="text-blue-500">{status.message}</p>
+                <div className="flex items-center justify-center space-x-2">
+                  <Terminal className="animate-pulse" />
+                  <p className="text-blue-500">{status.message}</p>
+                </div>
               </div>
             ) : (
               <>
-                <p className="text-blue-500">{status.message}</p>
+                <p className={`${status.error ? 'text-red-500' : 'text-blue-500'}`}>{status.message}</p>
                 {status.progress && (
                   <div className="mt-2">
                     <div className="h-2 bg-indigo-900 rounded-full overflow-hidden">
@@ -359,42 +400,57 @@ export function ResearchForm() {
             )}
           </div>
         )}
-        {report && (
-        <Button
-          variant="destructive"
-          onClick={handleReset}
-          className="mt-4 ml-4"
-        >
-          Reset Research
-        </Button>
-      )}
-        {followUpQuestions.length > 0 && status.stage === 'collecting-feedback' && (
-          <div className="mt-8 space-y-6 border-t border-indigo-900 pt-6">
-            <h3 className="text-lg font-medium text-indigo-500">Additional Questions</h3>
-            {followUpQuestions.map((question, index) => (
-              <div key={index} className="space-y-2">
-                <p className="text-indigo-500">{question}</p>
-                <Input
-                  value={answers[index] || ''}
-                  onChange={(e) => {
-                    const newAnswers = [...answers];
-                    newAnswers[index] = e.target.value;
-                    setAnswers(newAnswers);
-                  }}
-                  className="w-full bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-700 text-slate-900 dark:text-slate-100"
-                />
-              </div>
-            ))}
-            <Button
-              onClick={handleAnswerSubmit}
-              disabled={answers.length !== followUpQuestions.length}
-              className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium"
-            >
-             Continue your Research
-            </Button>
+        {status.reportUrl && (
+          <div className="text-center text-sm text-muted-foreground mt-4">
+            <p>Your final report will be saved here:</p>
+            <div className="mt-2 space-y-1">
+              <a href={status.reportUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                View Report
+              </a>
+              <br />
+              <a href={status.queryUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                View Query
+              </a>
+            </div>
           </div>
         )}
+        {report && (
+          <Button
+            variant="destructive"
+            onClick={handleReset}
+            className="mt-4 ml-4"
+          >
+            Reset Research
+          </Button>
+        )}
       </Card>
+
+      {followUpQuestions.length > 0 && status.stage === 'collecting-feedback' && (
+        <div className="mt-8 space-y-6 border-t border-indigo-900 pt-6">
+          <h3 className="text-lg font-medium text-indigo-500">Additional Questions</h3>
+          {followUpQuestions.map((question, index) => (
+            <div key={index} className="space-y-2">
+              <p className="text-indigo-500">{question}</p>
+              <Input
+                value={answers[index] || ''}
+                onChange={(e) => {
+                  const newAnswers = [...answers];
+                  newAnswers[index] = e.target.value;
+                  setAnswers(newAnswers);
+                }}
+                className="w-full bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-700 text-slate-900 dark:text-slate-100"
+              />
+            </div>
+          ))}
+          <Button
+            onClick={handleAnswerSubmit}
+            disabled={answers.length !== followUpQuestions.length}
+            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium"
+          >
+           Continue your Research
+          </Button>
+        </div>
+      )}
 
       {report && (
         <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-indigo-200 dark:border-indigo-800 p-8 rounded-xl shadow-xl">
