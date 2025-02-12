@@ -20,26 +20,31 @@ export async function POST(req: Request) {
       .join('\n')}`;
 
     console.log("[route.ts] Starting deep research with query:", combinedQuery);
+    let report = "";
 
-    // Perform research
-    const { learnings, visitedUrls } = await deepResearch({
-      query: combinedQuery,
-      breadth,
-      depth,
-    });
+    if ( process.env.DEBUG_REPORTS !== 'true' ) {
+      // Perform research
+      const { learnings, visitedUrls } = await deepResearch({
+        query: combinedQuery,
+        breadth,
+        depth,
+      });
 
-    console.log("[route.ts] Deep research completed. Writing final report...");
+      console.log("[route.ts] Deep research completed. Writing final report...");
 
-    // Generate report using combinedQuery for both 'query' and 'prompt'
-    console.log("[route.ts] Generating final report with combinedQuery as both query and prompt.");
-    const report = await writeFinalReport({
-      query: combinedQuery,
-      prompt: combinedQuery,
-      learnings,
-      visitedUrls,
-    });
+      // Generate report using combinedQuery for both 'query' and 'prompt'
+      console.log("[route.ts] Generating final report with combinedQuery as both query and prompt.");
+      report = await writeFinalReport({
+        query: combinedQuery,
+        prompt: combinedQuery,
+        learnings,
+        visitedUrls,
+      });
 
-    console.log("[route.ts] Final report generated.");
+      console.log("[route.ts] Final report generated.");
+    } else {
+      report = "This is a test";
+    }
     
     // Save the report to a markdown file
     const reportPath = path.join(process.cwd(), 'generated_reports', reportFileName);

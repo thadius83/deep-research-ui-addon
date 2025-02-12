@@ -1,22 +1,18 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { readFile } from 'fs/promises';
+import path from 'path';
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   context: { params: Promise<{ reportId: string }> }
 ) {
   const { reportId } = await context.params;
   const reportIdWithExt = reportId.endsWith('.md') ? reportId : `${reportId}.md`;
   
   try {
-    const response = await fetch(`${request.nextUrl.origin}/generated_reports/${reportIdWithExt}`);
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to retrieve report' },
-        { status: 404 }
-      );
-    }
+    const reportPath = path.join(process.cwd(), 'generated_reports', reportIdWithExt);
+    const report = await readFile(reportPath, 'utf-8');
     
-    const report = await response.text();
     return new NextResponse(report, {
       headers: {
         'Content-Type': 'text/markdown',
