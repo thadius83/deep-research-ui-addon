@@ -1,19 +1,25 @@
 import { deepResearch, writeFinalReport } from '@/lib/deep-research';
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
-import { writeFile } from 'fs/promises';
 import path from 'path';
+import { writeFile } from 'fs/promises';
 
 export async function POST(req: Request) {
   try {
-    const { query, breadth, depth, followUpQuestions, answers } = await req.json();
+    const { query, reportFileName, queryFileName, breadth, depth, followUpQuestions, answers } = await req.json();
+
+    if (!reportFileName || !queryFileName) {
+      return NextResponse.json(
+        { error: 'Missing reportFileName or queryFileName. Please initialize the report first.' },
+        { status: 400 }
+      );
+    }
 
     // Combine query with follow-up Q&A using combinedQuery
     const combinedQuery = `Initial Query: ${query}\nFollow-up Questions and Answers: ${followUpQuestions
       .map((q: string, i: number) => `Q: ${q}\nA: ${answers[i]}`)
       .join('\n')}`;
 
-    console.log("[route.ts] Combined Query:", combinedQuery);
+    console.log("[route.ts] Starting deep research with query:", combinedQuery);
 
     // Perform research
     const { learnings, visitedUrls } = await deepResearch({
@@ -22,8 +28,7 @@ export async function POST(req: Request) {
       depth,
     });
 
-    console.log("[route.ts] Deep research returned learnings:", learnings);
-    console.log("[route.ts] Deep research returned visitedUrls:", visitedUrls);
+    console.log("[route.ts] Deep research completed. Writing final report...");
 
     // Generate report using combinedQuery for both 'query' and 'prompt'
     console.log("[route.ts] Generating final report with combinedQuery as both query and prompt.");
@@ -35,31 +40,13 @@ export async function POST(req: Request) {
     });
 
     console.log("[route.ts] Final report generated.");
-
-    // Generate a unique ID for the report
-    const reportId = crypto.randomBytes(16).toString('hex');
-    
-    // Create timestamp prefix in format YYYY-MM-DD-HH-mm
-    const now = new Date();
-    const timestamp = now.toLocaleString('en-US', { 
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    }).replace(/[\/:]/g, '-').replace(',', '').replace(' ', '-');
     
     // Save the report to a markdown file
-    const reportFileName = `${timestamp}-${reportId}.md`;
     const reportPath = path.join(process.cwd(), 'generated_reports', reportFileName);
-    
-    // Save the raw markdown content directly
-    await writeFile(reportPath, report);
-
-    // Save the query to a separate markdown file
-    const queryFileName = `${timestamp}-${reportId}.query.md`;
     const queryPath = path.join(process.cwd(), 'generated_reports', queryFileName);
+    
+    // Save the report and update the query file
+    await writeFile(reportPath, report);
     await writeFile(queryPath, combinedQuery);
 
     console.log(`[route.ts] Report and query saved to ${reportPath} and ${queryPath}`);
@@ -69,7 +56,7 @@ export async function POST(req: Request) {
     const queryUrl = `/generated_reports/${queryFileName}`;
 
     return NextResponse.json({ 
-      reportId, 
+      reportId: reportFileName.replace('.md', ''),
       report, 
       reportUrl,
       query: combinedQuery,
